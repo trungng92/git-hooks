@@ -1,0 +1,36 @@
+#!/bin/bash
+# Makes commit messages start off with a specified value based on the branch name
+# e.g. if you have a branch called "feature/ABC-1234-implement-cool-feature
+#
+# If you set the environment variable:
+# export COMMIT_MSG_REGEX_EXPRESSION='ABC-[0-9]*'
+# This will make all of your commits on this branch start out with JIRA:ABC-1234
+#
+# You can also set an optional prefix at the beginning, e.g.
+# export COMMIT_MSG_PREFIX='JIRA:'
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+SHA1=$3
+
+[ ! -z "$COMMIT_MSG_PREFIX" ] || echo "Optional env variable COMMIT_MSG_PREFIX not specified"
+[ ! -z "$COMMIT_MSG_REGEX_EXPRESSION" ] || { echo "Warning: Env variable COMMIT_MSG_REGEX_EXPRESSION required to run commit message hook"; exit 0; }
+
+
+# Make sure we're in a branch. If we're not in a branch (e.g. if we're rebasing), just do nothing
+BRANCH_NAME=$(git symbolic-ref --short HEAD)
+if [ $? -ne 0 ]; then
+    echo "Unable to get branch name while preparing commit message"
+    exit 0
+fi
+
+IDENTIFIER=$(echo "$BRANCH_NAME" | grep --only-matching -e "$COMMIT_MSG_REGEX_EXPRESSION")
+FULL_IDENTIFIER="$COMMIT_MSG_PREFIX$IDENTIFIER"
+
+# Make sure the identifier is not already there
+if grep -e "^$FULL_IDENTIFIER" "$COMMIT_MSG_FILE"; then
+    echo "Commit already starts with $FULL_IDENTIFIER"
+    exit 0
+fi
+
+echo "$FULL_IDENTIFIER $(cat $COMMIT_MSG_FILE)" > "$COMMIT_MSG_FILE"
