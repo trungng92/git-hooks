@@ -25,7 +25,9 @@ if [ $? -ne 0 ]; then
 fi
 
 IDENTIFIER=$(echo "$BRANCH_NAME" | grep --only-matching -e "$COMMIT_MSG_REGEX_EXPRESSION")
-FULL_IDENTIFIER="$COMMIT_MSG_PREFIX$IDENTIFIER"
+if [ ! -z "$IDENTIFIER" ]; then
+    FULL_IDENTIFIER="$COMMIT_MSG_PREFIX$IDENTIFIER"
+fi
 
 # Make sure the identifier is not already there
 if grep -e "^$FULL_IDENTIFIER" "$COMMIT_MSG_FILE"; then
